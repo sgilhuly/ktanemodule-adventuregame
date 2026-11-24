@@ -25,7 +25,7 @@ public class AdventureGameModule : MonoBehaviour
     private int CodeInvLeft = 2;
     private int CodeInvRight = 3;
     private int CodeUse = 4;
-
+    private bool moduleSolved;
     private bool isActive = false;
     private bool isComplete = false;
 
@@ -612,6 +612,44 @@ public class AdventureGameModule : MonoBehaviour
             default:
                 yield return string.Format("sendtochaterror The {0} told me to tell you that the valid commands are 'cycle stats', 'cycle items', 'cycle all', and 'use [item]'", SelectedEnemy);
                 yield break;
+        }
+    }
+
+    IEnumerator TwitchHandleForcedSolve()
+    {
+        List<string> itemsToUse = new List<string>();
+
+        //use potion first if applicable
+        if (InvValues.Contains(ITEM.POTION))
+        {
+            yield return ProcessTwitchCommand("use potion");
+        }
+
+        //chooe one of the correct weapons
+        int weaponIndex = Array.IndexOf(CorrectWeapon, true);
+        itemsToUse.Add(ItemName(InvValues[weaponIndex]));
+
+        //for each item, use it if applicable, skipping weapons
+        for (int i = InvWeaponCount; i < InvValues.Count; i++)
+        {
+            if (ShouldUseItem(i))
+            {
+                itemsToUse.Add(ItemName((ITEM)InvValues[i]));
+            }
+        }
+
+        //Reverse to make weapon used last
+        itemsToUse.Reverse();
+
+        string log = string.Format("use {0}", string.Join(", ", itemsToUse.ToArray()));
+
+        Debug.Log(log);
+
+        yield return ProcessTwitchCommand(log);
+
+        while (!moduleSolved)
+        {
+            yield return null;
         }
     }
 }
